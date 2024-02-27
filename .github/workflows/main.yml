@@ -1,0 +1,55 @@
+name: Deploy WordPress
+
+# 触发条件：在 push 到 master 分支后
+on:
+  push:
+    branches:
+      - master
+
+# 任务
+jobs:
+  build-and-deploy:
+    # 服务器环境：最新版 Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      # 拉取代码
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          
+      # 安装 Nginx
+      - name: Install Nginx
+        run: sudo apt update && sudo apt install -y nginx
+      
+      # 安装 PHP
+      - name: Install PHP
+        run: |
+          apt-get install -y php8.0-cli php8.0-common php8.0-imap php8.0-redis php8.0-snmp php8.0-xml php
+
+      # 安装 MySQL
+      - name: Install MySQL
+        run: |
+          sudo apt install -y mysql-server
+
+      # 配置 Nginx
+      - name: Configure Nginx
+        run: |
+          sudo cp .github/nginx.conf /etc/nginx/sites-available/default
+
+      # 下载并安装 WordPress
+      - name: Download and Install WordPress
+        run: |
+          wget https://cn.wordpress.org/latest-zh_CN.tar.gz && tar -zxvf  latest-zh_CN.tar.gz
+
+      # 配置 WordPress
+      - name: Configure WordPress
+        run: |
+            cp ./wordpress/* /var/www/html && mv /var/html/index.html /var/html/indeg.htmk && rm -rf ./wordpress/*
+
+      # 启动 Nginx、PHP 和 MySQL 服务
+      - name: Start Services
+        run: |
+          sudo systemctl start nginx
+          sudo systemctl start php7.4-fpm
+          sudo systemctl start mysql
